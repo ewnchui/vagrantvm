@@ -21,7 +21,3 @@ module.exports =
 			response_type:	"token"
 			scope:			config.OAUTH2_SCOPE
 			client_id:		config.CLIENT_ID	
-	
-	vmStatus:
-		up: 'UP'
-		down: 'DOWN'			
