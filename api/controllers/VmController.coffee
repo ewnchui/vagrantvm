@@ -1,6 +1,11 @@
 _ = require 'lodash'
 actionUtil = require 'sails/lib/hooks/blueprints/actionUtil'
 Promise = require 'bluebird'
+notFound = new Error 'not found'
+reject = (err, res) ->
+  if err == notFound
+    return res.notFound()
+  res.serverError err
 
 module.exports =
   findOne: (req, res) ->
@@ -50,29 +55,78 @@ module.exports =
       .then (vm) ->
         if vm?
           return vm[req.params.cmd]()
-            .then ->
-              vm.status()
-            .then (status) ->
-              res.ok _.extend(vm, status: status)
-        res.notFound()
-      .catch res.serverError
+        Promise.reject notFound
 
   up: (req, res) ->
     req.params.cmd = 'up'
-    module.exports.cmd req, res
+    module.exports
+      .cmd req
+      .then res.ok
+      .catch (err) ->
+        reject err, res
 
   down: (req, res) ->
     req.params.cmd = 'down'
-    module.exports.cmd req, res
+    module.exports
+      .cmd req
+      .then res.ok
+      .catch (err) ->
+        reject err, res
 
   restart: (req, res) ->
     req.params.cmd = 'restart'
-    module.exports.cmd req, res
+    module.exports
+      .cmd req
+      .then res.ok
+      .catch (err) ->
+        reject err, res
 
   suspend: (req, res) ->
     req.params.cmd = 'suspend'
-    module.exports.cmd req, res
+    module.exports
+      .cmd req
+      .then res.ok
+      .catch (err) ->
+        reject err, res
 
   resume: (req, res) ->
     req.params.cmd = 'resume'
-    module.exports.cmd req, res
+    module.exports
+      .cmd req
+      .then res.ok
+      .catch (err) ->
+        reject err, res
+
+  backup: (req, res) ->
+    req.params.cmd = 'backup'
+    module.exports
+      .cmd req
+      .then (process) ->
+        res.attachment "backup.tar.xz"
+        process.stdout.pipe res
+      .catch (err) ->
+        reject err, res
+
+  restore: (req, res) ->
+    req.params.cmd = 'restore'
+    module.exports
+      .cmd req
+      .then (process) ->
+        new Promise (resolve, reject) ->
+          req
+            .file 'file'
+            .on 'error', reject
+            .on 'data', (file) ->
+              file
+                .on 'error', reject   
+                .pipe process.stdin
+                .on 'error', reject
+          process
+            .on 'close', (rc) ->
+              if rc == 0
+                return resolve()
+              reject "Restore with error code #{rc}"
+          process.stderr
+            .on 'data', reject
+      .then res.ok, (err) ->
+        res.serverError err.toString()

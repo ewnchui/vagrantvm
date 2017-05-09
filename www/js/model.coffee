@@ -1,23 +1,53 @@
 env = require './config.json'
+_ = require 'lodash'
 require 'PageableAR'
+require 'angular-file-saver'
+require 'ng-file-upload'
 
-angular.module 'starter.model', ['PageableAR']
+angular
+  .module 'starter.model', [
+    'PageableAR'
+    'ngFileSaver'
+    'ngFileUpload'
+  ]
 
-  .factory 'resources', (pageableAR) ->
+  .factory 'resources', (pageableAR, $http, $log, FileSaver, Upload) ->
 
     class Vm extends pageableAR.Model
+      $defaults:
+        disk: parseInt env.DISK
+        memory: parseInt env.MEMORY
+
       $idAttribute: 'id'
       
       $urlRoot: "api/vm"
       
-      cmd: (op) ->
-        if op == 'ssh'
-          window.open "#{env.SSHURL}?port=#{@port.ssh}"
-        else
-          @$save {}, url: "#{@$url()}/#{op}"
+      cmd: (op, files) ->
+        switch op
+          when 'ssh'
+            window.open "#{env.SSHURL}?port=#{@port.ssh}"
+          when 'backup'
+            $http
+              .get "#{@$url()}/#{op}", responseType: 'blob'
+              .then (res) ->
+                filename = res.headers('Content-Disposition').match(/filename="(.+)"/)[1]
+                FileSaver.saveAs res.data, filename
+          when 'restore'
+            if files.length != 0
+              Upload
+                .upload 
+                  method: 'PUT'
+                  url: "#{@$url()}/#{op}"
+                  data: file: files[0]
+                .then ->
+                  $log.info "Restore completed"
+                .catch (res) ->
+                  $log.error res.data
+          else
+            @$save {}, url: "#{@$url()}/#{op}"
 
       cfg: ->
-        JSON.stringify _.extend _.pick(@, 'status'), @port
+        JSON.stringify _.extend _.pick(@, 'status', 'memory', 'disk'), @port
 
     # VmList
     class VmList extends pageableAR.PageableCollection

@@ -6,10 +6,12 @@ echo vagrant:vagrant |chpasswd
 service ssh restart
 echo 'precedence ::ffff:0:0/96 100' >> /etc/gai.conf
 mkdir /vagrant
-echo '<%=hostname%>:/<%=name%> /vagrant nfs4 nolock 0 2' >>/etc/fstab
+echo '<%=hostname%>:/<%=name%>/data /vagrant nfs4 nolock 0 2' >>/etc/fstab
 SCRIPT
 
 Vagrant.configure("2") do |config|
+  config.vm.hostname = "<%=name%>"
+
   config.vm.box = "<%=box%>"
 
   config.vm.network "forwarded_port", guest: 1337, host_ip: "<%=hostname%>", host: <%=port.http%>
@@ -20,10 +22,14 @@ Vagrant.configure("2") do |config|
 
   config.vm.provider "libvirt" do |v|
     v.driver = "kvm"
+    v.nested = true
     v.memory = <%=memory%>
     v.connect_via_ssh = false
     v.username = "root"
     v.storage_pool_name = "default"
+    v.machine_virtual_size = <%=disk%>
+    v.management_network_name = 'default'
+    v.management_network_address = '192.168.122.0/24'
   end
 
   config.vm.synced_folder '.', '/vagrant', disabled: true
