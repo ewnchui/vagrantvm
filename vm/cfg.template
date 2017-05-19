@@ -16,6 +16,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.network "forwarded_port", guest: 1337, host_ip: "<%=hostname%>", host: <%=port.http%>
   config.vm.network "forwarded_port", guest: 22, host_ip: "<%=hostname%>", host: <%=port.ssh%>
+  config.vm.network "forwarded_port", guest: 3389, host_ip: "<%=hostname%>", host: <%=port.rdp%>
 
   config.vm.provision "shell", inline: $sshcfg
   config.vm.provision "docker"

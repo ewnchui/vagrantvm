@@ -8,6 +8,7 @@ url = require 'url'
   'BOX'
   'SSH'
   'HTTP'
+  'RDP'
 ].map (name) ->
   if not (name of process.env)
     throw new Error "process.env.#{name} not yet defined"
@@ -25,6 +26,7 @@ module.exports =
     portStart:
       ssh: parseInt process.env.SSH
       http: parseInt process.env.HTTP
+      rdp: parseInt process.env.RDP
     cmd:
       backup: _.template "tar -C <%=cwd%> -cJf - ." 
       restore: _.template "tar -C <%=cwd%> -xJf - ."
