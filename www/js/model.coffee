@@ -26,6 +26,8 @@ angular
         switch op
           when 'ssh'
             window.open "#{env.SSHURL}?port=#{@port.ssh}"
+          when 'rdp'
+            return
           when 'backup'
             $http
               .get "#{@$url()}/#{op}", responseType: 'blob'

@@ -24,6 +24,7 @@ angular
         $ionicActionSheet.show
           buttons: [
             { text: 'ssh', cmd: 'ssh' }
+            { text: 'remote desktop', cmd: 'rdp' }
             { text: 'up', cmd: 'up' }
             { text: 'down', cmd: 'down' }
             { text: 'resume', cmd: 'resume' }
